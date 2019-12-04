@@ -1,0 +1,5 @@
+﻿  Matrices0999.cpp
+c:\users\user\desktop\directxsamples\matrices0999\matrices0999.cpp(105): warning C4100: 'lpCmdLine': unreferenced formal parameter
+c:\users\user\desktop\directxsamples\matrices0999\matrices0999.cpp(104): warning C4100: 'hPrevInstance': unreferenced formal parameter
+Matrices0999.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/SAFESEH' specification
+  Matrices0999_2010.vcxproj -> C:\Users\user\Desktop\DirectXSamples\Matrices0999\Debug\Matrices0999.exe
