@@ -52,6 +52,7 @@ using namespace std;
 
 enum { MOVE_UP, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT };
 
+//시간값을 계산하기 위한 클래스
 class CTimeMgr {
 	clock_t start;
 	clock_t end;
@@ -91,6 +92,12 @@ public:
 
 };
 
+class entityBulletMoveTransform {
+public:
+	float x;
+	float y;
+};
+
 
 //주인공 클래스 
 class Hero :public entity {
@@ -117,21 +124,29 @@ void Hero::move(int i)
 	switch (i)
 	{
 	case MOVE_UP:
-		y_pos -= 3;
+		if (y_pos < 0) y_pos = 0;
+		else    //y_pos >= 0
+			y_pos -= 3;
 		break;
 
 	case MOVE_DOWN:
-		y_pos += 3;
+		if (y_pos > 416) y_pos = 416;
+		else
+			y_pos += 3;
 		break;
 
 
 	case MOVE_LEFT:
-		x_pos -= 3;
+		if (x_pos < 0) x_pos = 0;
+		else
+			x_pos -= 3;
 		break;
 
 
 	case MOVE_RIGHT:
-		x_pos += 3;
+		if (x_pos > 400) x_pos = 400;
+		else
+			x_pos += 3;
 		break;
 
 	}
@@ -222,9 +237,11 @@ public:
 	bool bShow;
 	float x_pos;
 	float y_pos;
+	entityBulletMoveTransform movePos;
 
 	void init(float x, float y);
 	void move(float x, float y);
+	void setMovePos(float x, float y);
 };
 
 void EnemyBullet::init(float x, float y) {
@@ -238,6 +255,11 @@ void EnemyBullet::move(float x, float y) {
 	y_pos += y;
 }
 
+//총알의 한번에 이동할 x, y값 설정
+void EnemyBullet::setMovePos(float x, float y) {
+	movePos.x = x;
+	movePos.y = y;
+}
 
 //객체 생성 
 CTimeMgr timeMgr;
@@ -247,7 +269,15 @@ Enemy enemy[ENEMY_NUM];
 //Bullet bullet; 
 list<EnemyBullet> enemyBullet;
 
+entity shootPosition{ 200, 0 };		//총알이 날아가기 시작할 위치
+
+float moveXPos = 2;		//shootPosition의 x좌표 이동값
+float moveYPos = 8;		//shootPosition의 y좌표 이동값
+
+
 bool pattern1 = true;
+bool pattern2 = false;
+bool pattern3 = false;
 
 
 // the entry point for any Windows program
@@ -472,15 +502,35 @@ void do_game_logic(void)
 	if (KEY_DOWN(VK_RIGHT))
 		hero.move(MOVE_RIGHT);
 
+	if (KEY_DOWN(VK_F1)) {
+		enemyBullet.clear();
+		pattern1 = true;
+		pattern2 = false;
+		pattern3 = false;
+	}
+
+	if (KEY_DOWN(VK_F2)) {
+		enemyBullet.clear();
+		pattern1 = false;
+		pattern2 = true;
+		pattern3 = false;
+	}
+
+	if (KEY_DOWN(VK_F3)) {
+		enemyBullet.clear();
+		pattern1 = false;
+		pattern2 = false;
+		pattern3 = true;
+	}
 
 	//적들 처리 
-	for (int i = 0; i < ENEMY_NUM; i++)
-	{
-		if (enemy[i].y_pos > 500)
-			enemy[i].init((float)150, 150/*rand()%300), rand()%200 - 300*/);
-		//else
-			//enemy[i].move();
-	}
+	//for (int i = 0; i < ENEMY_NUM; i++)
+	//{
+	//	if (enemy[i].y_pos > 500)
+	//		enemy[i].init((float)150, 150/*rand()%300), rand()%200 - 300*/);
+	//	//else
+	//		//enemy[i].move();
+	//}
 
 
 	//총알 처리 
@@ -506,29 +556,78 @@ void do_game_logic(void)
 
 	}*/
 
-	if (timeMgr.getTime() > 500) {
-		int it = rand() % 5;
-		for (int i = 0; i < 5; i++) {
-			if (i != it) {
-				EnemyBullet temp;
-				temp.init(60 * i, 0);
-				enemyBullet.push_back(temp);
+	//패턴1 드래곤플라이트식 패턴
+	if (pattern1) {
+		shootPosition = { 200, 0 };
+		if (timeMgr.getTime() > 500) {
+			int it = rand() % 5;
+			for (int i = 0; i < 5; i++) {
+				if (i != it) {
+					EnemyBullet temp;
+					temp.init(60 * i, 0);
+					enemyBullet.push_back(temp);
+				}
 			}
+			timeMgr.InitTime();
 		}
-		timeMgr.InitTime();
+
+		for (auto it = enemyBullet.begin(); it != enemyBullet.end(); it++)
+		{
+			it->move(0, 8);
+		}
 	}
 
-	for (auto it = enemyBullet.begin(); it != enemyBullet.end(); it++)
-	{
-		it->move(0, 8);
+	//패턴2 3방향 좌우로 이동하면서 발사
+	if (pattern2) {
+		if (timeMgr.getTime() > 250) {
+			//int it = rand() % 5;
+			for (int i = 0; i < 3; i++) {
+				EnemyBullet temp;
+				temp.init(shootPosition.x_pos, shootPosition.y_pos);
+				if (i % 3 == 0) temp.setMovePos(-8 * cos(45), 8 * sin(45));
+				if (i % 3 == 1) temp.setMovePos(0, 8);
+				if (i % 3 == 2) temp.setMovePos(8 * cos(45), 8 * sin(45));
+				enemyBullet.push_back(temp);
+			}
+			timeMgr.InitTime();
+		}
+
+		shootPosition.x_pos += moveXPos;
+		if (shootPosition.x_pos < 0) moveXPos *= -1;
+		if (shootPosition.x_pos > 400) moveXPos *= -1;
+
+		for (auto it = enemyBullet.begin(); it != enemyBullet.end(); it++)
+		{
+			it->move(it->movePos.x, it->movePos.y);
+		}
 	}
+
+	//패턴3 랜덤하게 사방으로 총알 발사
+	if (pattern3) {
+		shootPosition = { 200, 0 };
+		if (timeMgr.getTime() > 100) {
+			//int it = rand() % 5;
+			EnemyBullet temp;
+			temp.init(shootPosition.x_pos, shootPosition.y_pos);
+			temp.setMovePos(8 * cos(rand() % 140 + 70), 8);
+			enemyBullet.push_back(temp);
+			timeMgr.InitTime();
+		}
+
+		for (auto it = enemyBullet.begin(); it != enemyBullet.end(); it++)
+		{
+			it->move(it->movePos.x, it->movePos.y);
+		}
+	}
+
+
 
 	for (auto it = enemyBullet.begin(); it != enemyBullet.end(); it++) {
 		if (it->bShow == true) {
 			float x_distance = abs(hero.x_pos - it->x_pos);
 			float y_distance = abs(hero.y_pos - it->y_pos);
-			if (x_distance < 64)
-				if (y_distance < 64) {
+			if (x_distance < 64)	//64 = 가로길이
+				if (y_distance < 64) {	//64 = 세로길이
 					it->bShow = false;
 				}
 		}
@@ -538,11 +637,6 @@ void do_game_logic(void)
 		for (auto it = enemyBullet.begin(); it != enemyBullet.end();) {
 			if (it->y_pos > 500) {
 				enemyBullet.erase(it++);
-				//it->y_pos = -100;
-				if (pattern1 != true)
-				{
-					pattern1 = true;
-				}
 			}
 			else
 				++it;

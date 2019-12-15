@@ -1,5 +1,8 @@
 ﻿cl : 명령줄 warning D9035: 'Gm' 옵션은 더 이상 사용되지 않으므로 이후 릴리스에서 제거될 예정입니다.
   2D_Main.cpp
-c:\users\dizzy\onedrive\바탕 화면\github_oop_b677010\shooting-game\2d_sprite_tutorial1\2d_main.cpp(448): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-c:\users\dizzy\onedrive\바탕 화면\github_oop_b677010\shooting-game\2d_sprite_tutorial1\2d_main.cpp(514): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+c:\users\dizzy\onedrive\바탕 화면\github_oop_b677010\shooting-game\2d_sprite_tutorial1\2d_main.cpp(478): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+c:\users\dizzy\onedrive\바탕 화면\github_oop_b677010\shooting-game\2d_sprite_tutorial1\2d_main.cpp(567): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+c:\users\dizzy\onedrive\바탕 화면\github_oop_b677010\shooting-game\2d_sprite_tutorial1\2d_main.cpp(587): warning C4244: '인수': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+c:\users\dizzy\onedrive\바탕 화면\github_oop_b677010\shooting-game\2d_sprite_tutorial1\2d_main.cpp(589): warning C4244: '인수': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+c:\users\dizzy\onedrive\바탕 화면\github_oop_b677010\shooting-game\2d_sprite_tutorial1\2d_main.cpp(612): warning C4244: '인수': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
   2D_sprite_tutorial1.vcxproj -> C:\Users\dizzy\OneDrive\바탕 화면\GitHub_OOP_B677010\Shooting-Game\Debug\2D_sprite_tutorial1.exe
