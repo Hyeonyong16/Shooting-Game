@@ -32,7 +32,8 @@ LPDIRECT3DTEXTURE9 sprite;    // the pointer to the sprite
 LPDIRECT3DTEXTURE9 sprite_hero;    // the pointer to the sprite
 LPDIRECT3DTEXTURE9 sprite_enemy;    // the pointer to the sprite
 LPDIRECT3DTEXTURE9 sprite_bullet;    // the pointer to the sprite
-
+LPDIRECT3DTEXTURE9 sprite_gameoverText;    // the pointer to the sprite
+LPDIRECT3DTEXTURE9 sprite_background;    // the pointer to the sprite
 
 
 // function prototypes
@@ -101,11 +102,16 @@ public:
 
 //주인공 클래스 
 class Hero :public entity {
-
+	bool isDash;
+	int moveSpeed;
 public:
-	void fire();
-	void super_fire();
 	void move(int i);
+	void setDash(bool dash);
+	bool getDash();
+
+	void setSpeed(int speed);
+	int getSpeed();
+
 	void init(float x, float y);
 
 
@@ -113,40 +119,44 @@ public:
 
 void Hero::init(float x, float y)
 {
-
+	moveSpeed = 8;
+	isDash = false;
 	x_pos = x;
 	y_pos = y;
 
+}
+
+void Hero::setDash(bool dash) {
+	isDash = dash;
+}
+
+bool Hero::getDash() {
+	return isDash;
+}
+
+void Hero::setSpeed(int speed) {
+	moveSpeed = speed;
+}
+
+int Hero::getSpeed() {
+	return moveSpeed;
 }
 
 void Hero::move(int i)
 {
 	switch (i)
 	{
-	case MOVE_UP:
-		if (y_pos < 0) y_pos = 0;
-		else    //y_pos >= 0
-			y_pos -= 3;
-		break;
-
-	case MOVE_DOWN:
-		if (y_pos > 416) y_pos = 416;
-		else
-			y_pos += 3;
-		break;
-
-
 	case MOVE_LEFT:
 		if (x_pos < 0) x_pos = 0;
 		else
-			x_pos -= 3;
+			x_pos -= moveSpeed;
 		break;
 
 
 	case MOVE_RIGHT:
-		if (x_pos > 400) x_pos = 400;
+		if (x_pos > 576) x_pos = 576;
 		else
-			x_pos += 3;
+			x_pos += moveSpeed;
 		break;
 
 	}
@@ -271,14 +281,18 @@ list<EnemyBullet> enemyBullet;
 
 entity shootPosition{ 200, 0 };		//총알이 날아가기 시작할 위치
 
-float moveXPos = 2;		//shootPosition의 x좌표 이동값
-float moveYPos = 8;		//shootPosition의 y좌표 이동값
+//float moveXPos = 2;		//shootPosition의 x좌표 이동값
+//float moveYPos = 8;		//shootPosition의 y좌표 이동값
 
 
 bool pattern1 = true;
-bool pattern2 = false;
-bool pattern3 = false;
+//bool pattern2 = false;
+//bool pattern3 = false;
 
+float circleFellSpeed = 8.0;
+int patternRandNum;
+int patternDistNum;
+bool gameOver = false;
 
 // the entry point for any Windows program
 int WINAPI WinMain(HINSTANCE hInstance,
@@ -456,9 +470,35 @@ void initD3D(HWND hWnd)
 		NULL,    // not using 256 colors
 		&sprite_bullet);    // load to sprite
 
+	D3DXCreateTextureFromFileEx(d3ddev,    // the device pointer
+		L"gameover.png",    // the file name
+		D3DX_DEFAULT,    // default width
+		D3DX_DEFAULT,    // default height
+		D3DX_DEFAULT,    // no mip mapping
+		NULL,    // regular usage
+		D3DFMT_A8R8G8B8,    // 32-bit pixels with alpha
+		D3DPOOL_MANAGED,    // typical memory handling
+		D3DX_DEFAULT,    // no filtering
+		D3DX_DEFAULT,    // no mip filtering
+		D3DCOLOR_XRGB(255, 0, 255),    // the hot-pink color key
+		NULL,    // no image info struct
+		NULL,    // not using 256 colors
+		&sprite_gameoverText);    // load to sprite
 
-
-
+	D3DXCreateTextureFromFileEx(d3ddev,    // the device pointer
+		L"background.jpg",    // the file name
+		D3DX_DEFAULT,    // default width
+		D3DX_DEFAULT,    // default height
+		D3DX_DEFAULT,    // no mip mapping
+		NULL,    // regular usage
+		D3DFMT_A8R8G8B8,    // 32-bit pixels with alpha
+		D3DPOOL_MANAGED,    // typical memory handling
+		D3DX_DEFAULT,    // no filtering
+		D3DX_DEFAULT,    // no mip filtering
+		D3DCOLOR_XRGB(255, 0, 255),    // the hot-pink color key
+		NULL,    // no image info struct
+		NULL,    // not using 256 colors
+		&sprite_background);    // load to sprite
 
 	return;
 }
@@ -469,7 +509,7 @@ void init_game(void)
 	timeMgr.InitTime();
 
 	//객체 초기화 
-	hero.init(150, 300);
+	hero.init(288, 416);
 
 	//적들 초기화 
 	for (int i = 0; i < ENEMY_NUM; i++)
@@ -487,159 +527,244 @@ void init_game(void)
 
 void do_game_logic(void)
 {
-	timeMgr.UpdateTime();
-
-	//주인공 처리 
-	if (KEY_DOWN(VK_UP))
-		hero.move(MOVE_UP);
-
-	if (KEY_DOWN(VK_DOWN))
-		hero.move(MOVE_DOWN);
-
-	if (KEY_DOWN(VK_LEFT))
-		hero.move(MOVE_LEFT);
-
-	if (KEY_DOWN(VK_RIGHT))
-		hero.move(MOVE_RIGHT);
-
-	if (KEY_DOWN(VK_F1)) {
+	if (gameOver) {
 		enemyBullet.clear();
-		pattern1 = true;
-		pattern2 = false;
-		pattern3 = false;
+		circleFellSpeed = 8.0;
+
+		if (KEY_DOWN(0x52)) {
+			gameOver = false;
+		}
 	}
 
-	if (KEY_DOWN(VK_F2)) {
-		enemyBullet.clear();
-		pattern1 = false;
-		pattern2 = true;
-		pattern3 = false;
-	}
+	if (!gameOver) {
+		timeMgr.UpdateTime();
 
-	if (KEY_DOWN(VK_F3)) {
-		enemyBullet.clear();
-		pattern1 = false;
-		pattern2 = false;
-		pattern3 = true;
-	}
+		//주인공 처리 
+		/*if (KEY_DOWN(VK_UP))
+			hero.move(MOVE_UP);
 
-	//적들 처리 
-	//for (int i = 0; i < ENEMY_NUM; i++)
-	//{
-	//	if (enemy[i].y_pos > 500)
-	//		enemy[i].init((float)150, 150/*rand()%300), rand()%200 - 300*/);
-	//	//else
-	//		//enemy[i].move();
-	//}
+		if (KEY_DOWN(VK_DOWN))
+			hero.move(MOVE_DOWN);*/
 
+		if (KEY_DOWN(VK_LEFT))
+			hero.move(MOVE_LEFT);
 
-	//총알 처리 
-	/*if(bullet.show() == false)
-	{
-		if(KEY_DOWN(VK_SPACE))
-		{
-			bullet.active();
-			bullet.init(hero.x_pos, hero.y_pos);
+		if (KEY_DOWN(VK_RIGHT))
+			hero.move(MOVE_RIGHT);
+
+		if (KEY_DOWN(VK_F1)) {
+			enemyBullet.clear();
+			pattern1 = true;
+			/*pattern2 = false;
+			pattern3 = false;*/
 		}
 
+		/*if (KEY_DOWN(VK_F2)) {
+			enemyBullet.clear();
+			pattern1 = false;
+			pattern2 = true;
+			pattern3 = false;
+		}
 
-	}*/
+		if (KEY_DOWN(VK_F3)) {
+			enemyBullet.clear();
+			pattern1 = false;
+			pattern2 = false;
+			pattern3 = true;
+		}*/
+
+		if (KEY_DOWN(VK_SHIFT)) {
+			if (hero.getDash() == false) {
+				hero.setDash(true);
+				hero.setSpeed(40);
+			}
+		}
+
+		if (KEY_UP(VK_SHIFT)) {
+			if (hero.getDash() == true) {
+				hero.setDash(false);
+				hero.setSpeed(8);
+			}
+		}
+
+		//적들 처리 
+		//for (int i = 0; i < ENEMY_NUM; i++)
+		//{
+		//	if (enemy[i].y_pos > 500)
+		//		enemy[i].init((float)150, 150/*rand()%300), rand()%200 - 300*/);
+		//	//else
+		//		//enemy[i].move();
+		//}
 
 
-	/*if( bullet.show() == true )
-	{
-		if(bullet.y_pos < -70)
-			bullet.hide();
-		else
-			bullet.move();
+		//총알 처리 
+		/*if(bullet.show() == false)
+		{
+			if(KEY_DOWN(VK_SPACE))
+			{
+				bullet.active();
+				bullet.init(hero.x_pos, hero.y_pos);
+			}
 
 
-	}*/
+		}*/
 
-	//패턴1 드래곤플라이트식 패턴
-	if (pattern1) {
-		shootPosition = { 200, 0 };
-		if (timeMgr.getTime() > 500) {
-			int it = rand() % 5;
-			for (int i = 0; i < 5; i++) {
-				if (i != it) {
+
+		/*if( bullet.show() == true )
+		{
+			if(bullet.y_pos < -70)
+				bullet.hide();
+			else
+				bullet.move();
+
+
+		}*/
+
+		//패턴1 드래곤플라이트식 패턴
+		if (pattern1) {
+			shootPosition = { 200, 0 };
+			/*if (timeMgr.getTime() > 500) {
+				int it = rand() % 5;
+				for (int i = 0; i < 5; i++) {
+					if (i != it) {
+						EnemyBullet temp;
+						temp.init(60 * i, 0);
+						enemyBullet.push_back(temp);
+					}
+				}
+				timeMgr.InitTime();
+			}*/
+			if (timeMgr.getTime() > 500) {
+				/*int it = rand() % 5;
+				for (int i = 0; i < 5; i++) {
+					if (i != it) {
+						EnemyBullet temp;
+						temp.init(60 * i, 0);
+						enemyBullet.push_back(temp);
+					}
+				}*/
+				patternRandNum = rand() % 100;
+				patternDistNum = rand() % 20 + 20;
+				if (patternRandNum >= 0 && patternRandNum < 70) {
 					EnemyBullet temp;
-					temp.init(60 * i, 0);
+					temp.init(rand() % 336 + 120, -80);
+					temp.setMovePos(0, circleFellSpeed);
 					enemyBullet.push_back(temp);
 				}
-			}
-			timeMgr.InitTime();
-		}
 
-		for (auto it = enemyBullet.begin(); it != enemyBullet.end(); it++)
-		{
-			it->move(0, 8);
-		}
-	}
-
-	//패턴2 3방향 좌우로 이동하면서 발사
-	if (pattern2) {
-		if (timeMgr.getTime() > 250) {
-			//int it = rand() % 5;
-			for (int i = 0; i < 3; i++) {
-				EnemyBullet temp;
-				temp.init(shootPosition.x_pos, shootPosition.y_pos);
-				if (i % 3 == 0) temp.setMovePos(-8 * cos(45), 8 * sin(45));
-				if (i % 3 == 1) temp.setMovePos(0, 8);
-				if (i % 3 == 2) temp.setMovePos(8 * cos(45), 8 * sin(45));
-				enemyBullet.push_back(temp);
-			}
-			timeMgr.InitTime();
-		}
-
-		shootPosition.x_pos += moveXPos;
-		if (shootPosition.x_pos < 0) moveXPos *= -1;
-		if (shootPosition.x_pos > 400) moveXPos *= -1;
-
-		for (auto it = enemyBullet.begin(); it != enemyBullet.end(); it++)
-		{
-			it->move(it->movePos.x, it->movePos.y);
-		}
-	}
-
-	//패턴3 랜덤하게 사방으로 총알 발사
-	if (pattern3) {
-		shootPosition = { 200, 0 };
-		if (timeMgr.getTime() > 100) {
-			//int it = rand() % 5;
-			EnemyBullet temp;
-			temp.init(shootPosition.x_pos, shootPosition.y_pos);
-			temp.setMovePos(8 * cos(rand() % 140 + 70), 8);
-			enemyBullet.push_back(temp);
-			timeMgr.InitTime();
-		}
-
-		for (auto it = enemyBullet.begin(); it != enemyBullet.end(); it++)
-		{
-			it->move(it->movePos.x, it->movePos.y);
-		}
-	}
-
-
-
-	for (auto it = enemyBullet.begin(); it != enemyBullet.end(); it++) {
-		if (it->bShow == true) {
-			float x_distance = abs(hero.x_pos - it->x_pos);
-			float y_distance = abs(hero.y_pos - it->y_pos);
-			if (x_distance < 64)	//64 = 가로길이
-				if (y_distance < 64) {	//64 = 세로길이
-					it->bShow = false;
+				else if (patternRandNum >= 70 && patternRandNum < 80) {
+					int mainPos = rand() % 216 + 180;
+					for (int i = 0; i < 5; i++) {
+						EnemyBullet temp;
+						temp.init(mainPos + patternDistNum * i, -80 - 30 * i);
+						temp.setMovePos(0, circleFellSpeed);
+						enemyBullet.push_back(temp);
+					}
 				}
-		}
-	}
 
-	if (enemyBullet.size() != 0) {
-		for (auto it = enemyBullet.begin(); it != enemyBullet.end();) {
-			if (it->y_pos > 500) {
-				enemyBullet.erase(it++);
+				else if (patternRandNum >= 80 && patternRandNum < 90) {
+					int mainPos = rand() % 216 + 180;
+					for (int i = 0; i < 5; i++) {
+						EnemyBullet temp;
+						temp.init(mainPos - patternDistNum * i, -80 - 30 * i);
+						temp.setMovePos(0, circleFellSpeed);
+						enemyBullet.push_back(temp);
+					}
+				}
+
+				else if (patternRandNum >= 90 && patternRandNum < 100) {
+					int mainPos = rand() % 216 + 180;
+					for (int i = 0; i < 5; i++) {
+						EnemyBullet temp;
+						if (i % 2 == 0) {
+							temp.init(mainPos + patternDistNum + 40, -80 - 30 * i);
+						}
+						else {
+							temp.init(mainPos, -80 - 30 * i);
+						}
+
+						temp.setMovePos(0, circleFellSpeed);
+						enemyBullet.push_back(temp);
+					}
+				}
+
+				timeMgr.InitTime();
 			}
-			else
-				++it;
+
+
+			for (auto it = enemyBullet.begin(); it != enemyBullet.end(); it++)
+			{
+				it->move(it->movePos.x, it->movePos.y);
+			}
+		}
+
+		////패턴2 3방향 좌우로 이동하면서 발사
+		//if (pattern2) {
+		//	if (timeMgr.getTime() > 250) {
+		//		//int it = rand() % 5;
+		//		for (int i = 0; i < 3; i++) {
+		//			EnemyBullet temp;
+		//			temp.init(shootPosition.x_pos, shootPosition.y_pos);
+		//			if (i % 3 == 0) temp.setMovePos(-8 * cos(45), 8 * sin(45));
+		//			if (i % 3 == 1) temp.setMovePos(0, 8);
+		//			if (i % 3 == 2) temp.setMovePos(8 * cos(45), 8 * sin(45));
+		//			enemyBullet.push_back(temp);
+		//		}
+		//		timeMgr.InitTime();
+		//	}
+
+		//	shootPosition.x_pos += moveXPos;
+		//	if (shootPosition.x_pos < 0) moveXPos *= -1;
+		//	if (shootPosition.x_pos > 400) moveXPos *= -1;
+
+		//	for (auto it = enemyBullet.begin(); it != enemyBullet.end(); it++)
+		//	{
+		//		it->move(it->movePos.x, it->movePos.y);
+		//	}
+		//}
+
+		////패턴3 랜덤하게 사방으로 총알 발사
+		//if (pattern3) {
+		//	shootPosition = { 200, 0 };
+		//	if (timeMgr.getTime() > 100) {
+		//		//int it = rand() % 5;
+		//		EnemyBullet temp;
+		//		temp.init(shootPosition.x_pos, shootPosition.y_pos);
+		//		temp.setMovePos(8 * cos(rand() % 140 + 70), 8);
+		//		enemyBullet.push_back(temp);
+		//		timeMgr.InitTime();
+		//	}
+
+		//	for (auto it = enemyBullet.begin(); it != enemyBullet.end(); it++)
+		//	{
+		//		it->move(it->movePos.x, it->movePos.y);
+		//	}
+		//}
+
+
+
+		for (auto it = enemyBullet.begin(); it != enemyBullet.end(); it++) {
+			if (it->bShow == true) {
+				float x_distance = abs(hero.x_pos - it->x_pos);
+				float y_distance = abs(hero.y_pos - it->y_pos);
+				if (x_distance < 64)	//64 = 가로길이
+					if (y_distance < 58) {	//64 = 세로길이
+						it->bShow = false;
+					}
+			}
+		}
+
+		if (enemyBullet.size() != 0) {
+			for (auto it = enemyBullet.begin(); it != enemyBullet.end();) {
+				if (it->y_pos > 500) {
+					if (it->bShow == true) { gameOver = true; }
+					enemyBullet.erase(it++);
+					if (circleFellSpeed < 30)
+						circleFellSpeed += 0.5;
+				}
+				else
+					++it;
+			}
 		}
 	}
 
@@ -674,6 +799,12 @@ void render_frame(void)
 	D3DXVECTOR3 position(150.0f, 50.0f, 0.0f);    // position at 50, 50 with no depth
 	d3dspt->Draw(sprite, &part, &center, &position, D3DCOLOR_ARGB(127, 255, 255, 255));
 	*/
+
+	RECT part4;
+	SetRect(&part4, 0, 0, 640, 480);
+	D3DXVECTOR3 center4(0.0f, 0.0f, 0.0f);    // center at the upper-left corner
+	D3DXVECTOR3 position4(0, 0, 0.0f);    // position at 50, 50 with no depth
+	d3dspt->Draw(sprite_background, &part4, &center4, &position4, D3DCOLOR_ARGB(255, 255, 255, 255));
 
 	//주인공 
 	RECT part;
@@ -716,7 +847,16 @@ void render_frame(void)
 		d3dspt->Draw(sprite_enemy, &part2, &center2, &position2, D3DCOLOR_ARGB(255, 255, 255, 255));
 	}
 
+	if (gameOver == true)
+	{
+		RECT part3;
+		SetRect(&part3, 0, 0, 250, 256);
+		D3DXVECTOR3 center3(0.0f, 0.0f, 0.0f);    // center at the upper-left corner
+		D3DXVECTOR3 position3(170, 65, 0.0f);    // position at 50, 50 with no depth
+		d3dspt->Draw(sprite_gameoverText, &part3, &center3, &position3, D3DCOLOR_ARGB(255, 255, 255, 255));
+	}
 
+	
 
 	d3dspt->End();    // end sprite drawing
 
@@ -739,6 +879,8 @@ void cleanD3D(void)
 	sprite_hero->Release();
 	sprite_enemy->Release();
 	sprite_bullet->Release();
+	sprite_gameoverText->Release();
+	sprite_background->Release();
 
 	return;
 }
