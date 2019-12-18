@@ -4,7 +4,11 @@
 #include <d3d9.h>
 #include <d3dx9.h>
 #include <iostream>
-#include <ctime>
+#include "TimeMgr.h"
+#include "Entity.h"
+#include "Hero.h"
+#include "EntityBulletMoveTransform.h"
+#include "EnemyBullet.h"
 #include <list>
 
 // define the screen resolution and keyboard macros
@@ -13,7 +17,7 @@
 #define KEY_DOWN(vk_code) ((GetAsyncKeyState(vk_code) & 0x8000) ? 1 : 0)
 #define KEY_UP(vk_code) ((GetAsyncKeyState(vk_code) & 0x8000) ? 0 : 1)
 
-#define ENEMY_NUM 1 
+//#define ENEMY_NUM 1 
 
 
 // include the Direct3D Library file
@@ -30,10 +34,13 @@ LPD3DXSPRITE d3dspt;    // the pointer to our Direct3D Sprite interface
 // sprite declarations
 LPDIRECT3DTEXTURE9 sprite;    // the pointer to the sprite
 LPDIRECT3DTEXTURE9 sprite_hero;    // the pointer to the sprite
+LPDIRECT3DTEXTURE9 sprite_hero_happy;    // the pointer to the sprite
+LPDIRECT3DTEXTURE9 sprite_hero_fail;    // the pointer to the sprite
 LPDIRECT3DTEXTURE9 sprite_enemy;    // the pointer to the sprite
 LPDIRECT3DTEXTURE9 sprite_bullet;    // the pointer to the sprite
 LPDIRECT3DTEXTURE9 sprite_gameoverText;    // the pointer to the sprite
 LPDIRECT3DTEXTURE9 sprite_background;    // the pointer to the sprite
+
 
 
 // function prototypes
@@ -51,144 +58,144 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 using namespace std;
 
 
-enum { MOVE_UP, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT };
+//enum { MOVE_UP, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT };
 
 //시간값을 계산하기 위한 클래스
-class CTimeMgr {
-	clock_t start;
-	clock_t end;
-	double curTime;
-
-public:
-	void InitTime();
-	void UpdateTime();
-	double getTime();
-};
-
-void CTimeMgr::InitTime() {
-	curTime = 0;
-	start = clock();
-}
-
-void CTimeMgr::UpdateTime() {
-	end = clock();
-	curTime += (double)(end - start);
-
-	start = clock();
-}
-
-double CTimeMgr::getTime() {
-	return curTime;
-}
+//class CTimeMgr {
+//	clock_t start;
+//	clock_t end;
+//	double curTime;
+//
+//public:
+//	void InitTime();
+//	void UpdateTime();
+//	double getTime();
+//};
+//
+//void CTimeMgr::InitTime() {
+//	curTime = 0;
+//	start = clock();
+//}
+//
+//void CTimeMgr::UpdateTime() {
+//	end = clock();
+//	curTime += (double)(end - start);
+//
+//	start = clock();
+//}
+//
+//double CTimeMgr::getTime() {
+//	return curTime;
+//}
 
 
 //기본 클래스 
-class entity {
-
-public:
-	float x_pos;
-	float y_pos;
-	int status;
-	int HP;
-
-};
-
-class entityBulletMoveTransform {
-public:
-	float x;
-	float y;
-};
+//class entity {
+//
+//public:
+//	float x_pos;
+//	float y_pos;
+//	int status;
+//	int HP;
+//
+//};
+//
+//class entityBulletMoveTransform {
+//public:
+//	float x;
+//	float y;
+//};
 
 
 //주인공 클래스 
-class Hero :public entity {
-	bool isDash;
-	int moveSpeed;
-public:
-	void move(int i);
-	void setDash(bool dash);
-	bool getDash();
-
-	void setSpeed(int speed);
-	int getSpeed();
-
-	void init(float x, float y);
-
-
-};
-
-void Hero::init(float x, float y)
-{
-	moveSpeed = 8;
-	isDash = false;
-	x_pos = x;
-	y_pos = y;
-
-}
-
-void Hero::setDash(bool dash) {
-	isDash = dash;
-}
-
-bool Hero::getDash() {
-	return isDash;
-}
-
-void Hero::setSpeed(int speed) {
-	moveSpeed = speed;
-}
-
-int Hero::getSpeed() {
-	return moveSpeed;
-}
-
-void Hero::move(int i)
-{
-	switch (i)
-	{
-	case MOVE_LEFT:
-		if (x_pos < 0) x_pos = 0;
-		else
-			x_pos -= moveSpeed;
-		break;
-
-
-	case MOVE_RIGHT:
-		if (x_pos > 576) x_pos = 576;
-		else
-			x_pos += moveSpeed;
-		break;
-
-	}
-
-}
+//class Hero :public Entity {
+//	bool isDash;
+//	int moveSpeed;
+//public:
+//	void move(int i);
+//	void setDash(bool dash);
+//	bool getDash();
+//
+//	void setSpeed(int speed);
+//	int getSpeed();
+//
+//	void init(float x, float y);
+//
+//
+//};
+//
+//void Hero::init(float x, float y)
+//{
+//	moveSpeed = 8;
+//	isDash = false;
+//	x_pos = x;
+//	y_pos = y;
+//
+//}
+//
+//void Hero::setDash(bool dash) {
+//	isDash = dash;
+//}
+//
+//bool Hero::getDash() {
+//	return isDash;
+//}
+//
+//void Hero::setSpeed(int speed) {
+//	moveSpeed = speed;
+//}
+//
+//int Hero::getSpeed() {
+//	return moveSpeed;
+//}
+//
+//void Hero::move(int i)
+//{
+//	switch (i)
+//	{
+//	case MOVE_LEFT:
+//		if (x_pos < 0) x_pos = 0;
+//		else
+//			x_pos -= moveSpeed;
+//		break;
+//
+//
+//	case MOVE_RIGHT:
+//		if (x_pos > 576) x_pos = 576;
+//		else
+//			x_pos += moveSpeed;
+//		break;
+//
+//	}
+//
+//}
 
 
 
 
 // 적 클래스 
-class Enemy :public entity {
-
-public:
-	void fire();
-	void init(float x, float y);
-	void move();
-
-};
-
-void Enemy::init(float x, float y)
-{
-
-	x_pos = x;
-	y_pos = y;
-
-}
-
-void Enemy::move()
-{
-	y_pos += 2;
-
-}
+//class Enemy :public Entity {
+//
+//public:
+//	void fire();
+//	void init(float x, float y);
+//	void move();
+//
+//};
+//
+//void Enemy::init(float x, float y)
+//{
+//
+//	x_pos = x;
+//	y_pos = y;
+//
+//}
+//
+//void Enemy::move()
+//{
+//	y_pos += 2;
+//
+//}
 
 
 
@@ -196,90 +203,90 @@ void Enemy::move()
 
 
 // 총알 클래스 
-class Bullet :public entity {
-
-public:
-	bool bShow;
-
-	void init(float x, float y);
-	void move();
-	bool show();
-	void hide();
-	void active();
-
-};
-
-void Bullet::init(float x, float y)
-{
-	x_pos = x;
-	y_pos = y;
-
-}
-
-bool Bullet::show()
-{
-	return bShow;
-
-}
-
-void Bullet::active()
-{
-	bShow = true;
-
-}
-
-void Bullet::move()
-{
-	y_pos -= 8;
-}
-
-void Bullet::hide()
-{
-	bShow = false;
-
-}
+//class Bullet :public Entity {
+//
+//public:
+//	bool bShow;
+//
+//	void init(float x, float y);
+//	void move();
+//	bool show();
+//	void hide();
+//	void active();
+//
+//};
+//
+//void Bullet::init(float x, float y)
+//{
+//	x_pos = x;
+//	y_pos = y;
+//
+//}
+//
+//bool Bullet::show()
+//{
+//	return bShow;
+//
+//}
+//
+//void Bullet::active()
+//{
+//	bShow = true;
+//
+//}
+//
+//void Bullet::move()
+//{
+//	y_pos -= 8;
+//}
+//
+//void Bullet::hide()
+//{
+//	bShow = false;
+//
+//}
 
 
 //탄막 구조체
-class EnemyBullet
-{
-public:
-	bool bShow;
-	float x_pos;
-	float y_pos;
-	entityBulletMoveTransform movePos;
-
-	void init(float x, float y);
-	void move(float x, float y);
-	void setMovePos(float x, float y);
-};
-
-void EnemyBullet::init(float x, float y) {
-	x_pos = x;
-	y_pos = y;
-	bShow = true;
-}
-
-void EnemyBullet::move(float x, float y) {
-	x_pos += x;
-	y_pos += y;
-}
-
-//총알의 한번에 이동할 x, y값 설정
-void EnemyBullet::setMovePos(float x, float y) {
-	movePos.x = x;
-	movePos.y = y;
-}
+//class EnemyBullet
+//{
+//public:
+//	bool bShow;
+//	float x_pos;
+//	float y_pos;
+//	EntityBulletMoveTransform movePos;
+//
+//	void init(float x, float y);
+//	void move(float x, float y);
+//	void setMovePos(float x, float y);
+//};
+//
+//void EnemyBullet::init(float x, float y) {
+//	x_pos = x;
+//	y_pos = y;
+//	bShow = true;
+//}
+//
+//void EnemyBullet::move(float x, float y) {
+//	x_pos += x;
+//	y_pos += y;
+//}
+//
+////총알의 한번에 이동할 x, y값 설정
+//void EnemyBullet::setMovePos(float x, float y) {
+//	movePos.x = x;
+//	movePos.y = y;
+//}
 
 //객체 생성 
-CTimeMgr timeMgr;
+TimeMgr timeMgr;
 
 Hero hero;
-Enemy enemy[ENEMY_NUM];
+//Enemy enemy[ENEMY_NUM];
 //Bullet bullet; 
 list<EnemyBullet> enemyBullet;
 
-entity shootPosition{ 200, 0 };		//총알이 날아가기 시작할 위치
+Entity shootPosition{ 200, 0 };		//총알이 날아가기 시작할 위치
 
 //float moveXPos = 2;		//shootPosition의 x좌표 이동값
 //float moveYPos = 8;		//shootPosition의 y좌표 이동값
@@ -408,6 +415,7 @@ void initD3D(HWND hWnd)
 
 	D3DXCreateSprite(d3ddev, &d3dspt);    // create the Direct3D Sprite object
 
+
 	D3DXCreateTextureFromFileEx(d3ddev,    // the device pointer
 		L"Panel3.png",    // the file name
 		D3DX_DEFAULT,    // default width
@@ -438,6 +446,36 @@ void initD3D(HWND hWnd)
 		NULL,    // no image info struct
 		NULL,    // not using 256 colors
 		&sprite_hero);    // load to sprite
+
+	D3DXCreateTextureFromFileEx(d3ddev,    // the device pointer
+		L"Hero_Happy.png",    // the file name
+		D3DX_DEFAULT,    // default width
+		D3DX_DEFAULT,    // default height
+		D3DX_DEFAULT,    // no mip mapping
+		NULL,    // regular usage
+		D3DFMT_A8R8G8B8,    // 32-bit pixels with alpha
+		D3DPOOL_MANAGED,    // typical memory handling
+		D3DX_DEFAULT,    // no filtering
+		D3DX_DEFAULT,    // no mip filtering
+		D3DCOLOR_XRGB(255, 0, 255),    // the hot-pink color key
+		NULL,    // no image info struct
+		NULL,    // not using 256 colors
+		&sprite_hero_happy);    // load to sprite
+
+	D3DXCreateTextureFromFileEx(d3ddev,    // the device pointer
+		L"Hero_Fail.png",    // the file name
+		D3DX_DEFAULT,    // default width
+		D3DX_DEFAULT,    // default height
+		D3DX_DEFAULT,    // no mip mapping
+		NULL,    // regular usage
+		D3DFMT_A8R8G8B8,    // 32-bit pixels with alpha
+		D3DPOOL_MANAGED,    // typical memory handling
+		D3DX_DEFAULT,    // no filtering
+		D3DX_DEFAULT,    // no mip filtering
+		D3DCOLOR_XRGB(255, 0, 255),    // the hot-pink color key
+		NULL,    // no image info struct
+		NULL,    // not using 256 colors
+		&sprite_hero_fail);    // load to sprite
 
 	D3DXCreateTextureFromFileEx(d3ddev,    // the device pointer
 		L"enemy.png",    // the file name
@@ -500,6 +538,7 @@ void initD3D(HWND hWnd)
 		NULL,    // not using 256 colors
 		&sprite_background);    // load to sprite
 
+
 	return;
 }
 
@@ -512,11 +551,11 @@ void init_game(void)
 	hero.init(288, 416);
 
 	//적들 초기화 
-	for (int i = 0; i < ENEMY_NUM; i++)
-	{
+	//for (int i = 0; i < ENEMY_NUM; i++)
+	//{
 
-		enemy[i].init((float)(rand() % 300), rand() % 200 - 300);
-	}
+	//	enemy[i].init((float)(rand() % 300), rand() % 200 - 300);
+	//}
 
 	//총알 초기화 
 	//bullet.init(hero.x_pos, hero.y_pos); 
@@ -634,7 +673,7 @@ void do_game_logic(void)
 				}
 				timeMgr.InitTime();
 			}*/
-			if (timeMgr.getTime() > 500) {
+			if (timeMgr.getTime() > 400) {
 				/*int it = rand() % 5;
 				for (int i = 0; i < 5; i++) {
 					if (i != it) {
@@ -767,9 +806,6 @@ void do_game_logic(void)
 			}
 		}
 	}
-
-
-
 }
 
 // this is the function used to render a single frame
@@ -811,7 +847,16 @@ void render_frame(void)
 	SetRect(&part, 0, 0, 64, 64);
 	D3DXVECTOR3 center(0.0f, 0.0f, 0.0f);    // center at the upper-left corner
 	D3DXVECTOR3 position(hero.x_pos, hero.y_pos, 0.0f);    // position at 50, 50 with no depth
-	d3dspt->Draw(sprite_hero, &part, &center, &position, D3DCOLOR_ARGB(255, 255, 255, 255));
+	if (!gameOver) {
+		if (hero.getDash() == false) {
+			d3dspt->Draw(sprite_hero, &part, &center, &position, D3DCOLOR_ARGB(255, 255, 255, 255));
+		}
+		if (hero.getDash() == true) {
+			d3dspt->Draw(sprite_hero_happy, &part, &center, &position, D3DCOLOR_ARGB(255, 255, 255, 255));
+		}
+	}
+	if(gameOver)
+		d3dspt->Draw(sprite_hero_fail, &part, &center, &position, D3DCOLOR_ARGB(255, 255, 255, 255));
 
 	////총알 
 	//if(bullet.bShow == true)
@@ -836,16 +881,16 @@ void render_frame(void)
 
 
 	////적 
-	RECT part2;
-	SetRect(&part2, 0, 0, 64, 64);
-	D3DXVECTOR3 center2(0.0f, 0.0f, 0.0f);    // center at the upper-left corner
+	//RECT part2;
+	//SetRect(&part2, 0, 0, 64, 64);
+	//D3DXVECTOR3 center2(0.0f, 0.0f, 0.0f);    // center at the upper-left corner
 
-	for (int i = 0; i < ENEMY_NUM; i++)
-	{
+	//for (int i = 0; i < ENEMY_NUM; i++)
+	//{
 
-		D3DXVECTOR3 position2(enemy[i].x_pos, enemy[i].y_pos, 0.0f);    // position at 50, 50 with no depth
-		d3dspt->Draw(sprite_enemy, &part2, &center2, &position2, D3DCOLOR_ARGB(255, 255, 255, 255));
-	}
+	//	D3DXVECTOR3 position2(enemy[i].x_pos, enemy[i].y_pos, 0.0f);    // position at 50, 50 with no depth
+	//	d3dspt->Draw(sprite_enemy, &part2, &center2, &position2, D3DCOLOR_ARGB(255, 255, 255, 255));
+	//}
 
 	if (gameOver == true)
 	{
@@ -855,8 +900,6 @@ void render_frame(void)
 		D3DXVECTOR3 position3(170, 65, 0.0f);    // position at 50, 50 with no depth
 		d3dspt->Draw(sprite_gameoverText, &part3, &center3, &position3, D3DCOLOR_ARGB(255, 255, 255, 255));
 	}
-
-	
 
 	d3dspt->End();    // end sprite drawing
 
@@ -877,6 +920,8 @@ void cleanD3D(void)
 
 	//객체 해제 
 	sprite_hero->Release();
+	sprite_hero_happy->Release();
+	sprite_hero_fail->Release();
 	sprite_enemy->Release();
 	sprite_bullet->Release();
 	sprite_gameoverText->Release();
